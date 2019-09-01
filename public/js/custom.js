@@ -1,3 +1,4 @@
+
 $(document).ready(function () {
 
     var firebaseConfig = {
@@ -5,29 +6,24 @@ $(document).ready(function () {
         authDomain: "chat-box-4d383.firebaseapp.com",
         databaseURL: "https://chat-box-4d383.firebaseio.com",
         projectId: "chat-box-4d383",
-        storageBucket: "gs://chat-box-4d383.appspot.com/profile-images",
+        storageBucket: "chat-box-4d383.appspot.com",
         messagingSenderId: "354463083011",
         appId: "1:354463083011:web:272ffce6179ad17e"
-    };
-    var config = {
-        apiKey: "AIzaSyD_UChRzC0qFKDIOW4o5s0--etxlbDnmWY",
-        authDomain: "chat-box-4d383.firebaseapp.com",
-        databaseURL: "https://chat-box-4d383.firebaseio.com",
-        storageBucket: "gs://chat-box-4d383.appspot.com/profile-images",
       };
-    // firebase.initializeApp(config);
+
     
     firebase.initializeApp(firebaseConfig);
     
-    // var storage = firebase.storage();
+    var storage = firebase.storage().ref();
     var db = firebase.firestore();
 
     let username = localStorage.getItem('username');
     let name = localStorage.getItem('name');
     let  friend_name = 'm_awatif';
+
     var chatBox={
 
-        loadMyData: function(){
+        loadMyData: ()=>{
 
             let string= '';
 
@@ -35,7 +31,6 @@ $(document).ready(function () {
                 .collection(friend_name).get().then((querySnapshot) => {
              querySnapshot.forEach((doc) => {
                  
-            // console.log(doc.id ,'=>',doc.data() )
 
             if(doc.data().name =='You')
             string += `<div class=" chat self"> <span class="name" >You</span><br>`;
@@ -57,7 +52,7 @@ $(document).ready(function () {
     
 
         },
-        postData: function(dataForMe,dataForYou)
+        postData: (dataForMe,dataForYou)=>
         {
             db.collection("users").doc(username)
                 .collection(friend_name).add(dataForMe);
@@ -65,7 +60,7 @@ $(document).ready(function () {
             db.collection("users").doc(friend_name)
                 .collection(username).add(dataForYou);
         },
-        getTime: function() {
+        getTime: ()=> {
             let DateAndTime = new Date();
             let month = DateAndTime.getMonth();
             let day = DateAndTime.getDate();
@@ -87,31 +82,54 @@ $(document).ready(function () {
         },
          loadFriends: async ()=>{
             let people_list = '';
-            let image =[]
-            image.push('../images/IMG_0172.JPG');
-            image.push('../images/IMG_9913.JPG');
-            let i = 0;
             db.collection("login").get()
             .then((data)=>{
-                data.forEach((doc)=>{
+                data.forEach(async(doc)=>{
                     if(doc.data().username!=username)
-                  people_list += `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
-                        <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${image[i]}"> </span>
-                        <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
-                        <span name ='${doc.data().username}' class="onlineStatus" ><img stlye="margin-left:20px" src="../images/circle-16.png"></span>
-                        </div></a> `
+                    {
+                        let load = await storage.child(`profile-images/${doc.data().username}`).listAll()
+                        .then(async(result)=>{
+                             result.items.forEach(async(image)=>{
+                                image.getDownloadURL().then(async(url)=>{
 
-                        i++;
-                        if(i==2)
-                        i= 0;
-                })
+                                    db.collection('onlineUsers').get()
+                                    .then(async(querySnapshot)=>{
+                                        querySnapshot.forEach((Doc)=>{
+                                            if(doc.data().username == Doc.id)
+                                            {
+                                            if(Doc.data().online == true)
+                                            people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
+                                            <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
+                                            <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
+                                            <span name ='${doc.data().username}' class="onlineStatus" ><img stlye="margin-left:20px" src="../images/circle-16.png"></span>
+                                            </div></a> `;
+                                            else
+                                            people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
+                                            <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
+                                            <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
+                                            </div></a> `;
 
-                $('.friend-list').append(people_list);
+                                            $('.friend-list').html(people_list);                
+                                            $('.friend-list').html(people_list);    
+                                            }
+                                        })
+                                    })
+                                    
+                            })   
+                             
+                        })
+
+                    })
+                }
             })
+             
+            })
+            setTimeout(()=>{
+                chatBox.loadFriends();
+            },1000)
         },
-        changeFriend : (event)=>
-        {
-            console.log(event);
+        appendHTML: ()=>{
+
         },
         submit: ()=>
         {
@@ -122,7 +140,6 @@ $(document).ready(function () {
                 var dataForMe = { name: 'You' , time: time , comment: comment ,createdAt: firebase.firestore.FieldValue.serverTimestamp()};
                 var dataForYou = { name: name , time: time , comment: comment ,createdAt: firebase.firestore.FieldValue.serverTimestamp()};
                 chatBox.postData(dataForMe,dataForYou);
-
                 $('#comment').val('');
         }
         ,
@@ -135,10 +152,8 @@ $(document).ready(function () {
                     db.collection('liveChatt').doc(friend_name)
                          .collection(username).doc(doc.id).update({"username":username,"live":false,"online":false})
                          .then((data)=>{
-                            console.log("Updated")
                          })
                          .catch((error)=>{
-                             console.log(`Not Updated `,error)
                          })
                 })
             })
@@ -154,10 +169,8 @@ $(document).ready(function () {
                     db.collection('liveChatt').doc(friend_name)
                          .collection(username).doc(doc.id).update({"username":username,"live":true,"online":false})
                          .then((data)=>{
-                            console.log("Updated")
                          })
                          .catch((error)=>{
-                             console.log(`Not Updated `,error)
                          })
                 })
             })
@@ -168,11 +181,8 @@ $(document).ready(function () {
                          .collection(friend_name).get()
                          .then((querySnapshot)=>{
                              querySnapshot.forEach((doc)=>{
-                                console.log("getting status")
-                                console.log(doc.data().live)
                                  if(doc.data().live == true)
                                  {
-                                     console.log("Check")
                                     $("#liveStatus").html("typing...");
                                  }
                                  else
@@ -183,6 +193,20 @@ $(document).ready(function () {
                          setTimeout(()=>{
                             chatBox.changeLiveStatus();
                         },1000)
+        },
+        makeMeOnline:()=>{
+            db.collection('onlineUsers').doc(username).update({"online":true});
+        },
+        makeMeOffline:()=>{
+            db.collection('onlineUsers').doc(username).update({"online":false});
+        },
+        hideBox:()=>{
+            $('.chat-container').css("display","none");            
+        },
+        showBox:()=>{
+
+            $('.chat-container').css("display","inline");
+            $('.initalMessage').css("display","none");
         }
     };
 
@@ -195,37 +219,37 @@ $(document).ready(function () {
     
             if(Key.keyCode>=32 && Key.keyCode <=126 || Key.keyCode==13) 
             {
-                console.log("Key is pressed");
                 chatBox.makeStatusTrue();
             }
     });
-
+    chatBox.hideBox();
+    chatBox.makeMeOnline();
     chatBox.loadFriends();
     chatBox.loadMyData();
-    chatBox.changeLiveStatus(); 
-    console.log(username);
-    $('#send').click(function(){
+    chatBox.changeLiveStatus();
+    $('.chat-form').delegate('.send','click',()=>{
         chatBox.submit();
         makeStatusFalse();
-    });
-
-    $('#comment').focus();
+        console.log("sent");
+    })
+    
     chatBox.makeStatusFalse();
     
     $('.friend-list').delegate('.available-friends','click',(event)=>
     {
+        chatBox.showBox();
+        $('#comment').focus();
         friend_name = $(event.target).attr('name');
-        console.log(username);
          let chat_name =  $('a.'+friend_name).find($('span.'+friend_name)).html();
          let imageURL =  $('a.'+friend_name).find($('img')).attr('src');
-        console.log(chat_name,imageURL);
 
         $('.chat-photo').find($('img')).attr('src',imageURL);
         $('.chat-name').html(chat_name);
-    })
 
+    })
     $('#signOut').click(()=>{
         localStorage.clear();
+        chatBox.makeMeOffline();
         window.location.href = 'login.html';
     })
 
