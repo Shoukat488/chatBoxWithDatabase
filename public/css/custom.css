@@ -1,5 +1,7 @@
 body{
     background:#060635;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
 }
 .container-fluid{
     background:#060635;
@@ -7,9 +9,7 @@ body{
 .chat-container{
     margin-bottom: 20px;
 }
-/* body{
-    background:rgb(6, 6, 53);
-} */
+
 .containerMain{
     width: 500px;
     border-radius: 0px 0px 5px 5px;
@@ -92,16 +92,9 @@ span.name{
    overflow-y: scroll;
    height: 400px;
 } */
-.chatLogs::-webkit-scrollbar{
-    width: 10px;
-}
-.chatLogs::-webkit-scrollbar-thumb{
-    border-radius: 5px;
-    background: rgba(0, 0, 0, -1);
-}
+
 #chatBox{
     overflow-x: hidden;
-    overflow-y: auto;
     height: 440px;
     margin-bottom: 4px;
 }
@@ -134,10 +127,12 @@ span.name{
 .chat-form #comment{
         padding: 9px;
         width: 450px;
+        height: 40px;;
         border-radius: 18px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
+.row{
+}
 .chat-form #send:hover{
     background: rgb(3, 80, 42);;
     transition: 1s;

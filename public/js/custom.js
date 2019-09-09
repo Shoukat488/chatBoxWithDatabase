@@ -22,7 +22,7 @@ $(document).ready(function () {
     let  friend_name = 'm_awatif';
 
     var chatBox={
-
+        alreadyMarkedFriends :[],
         loadMyData: ()=>{
 
             let string= '';
@@ -81,40 +81,19 @@ $(document).ready(function () {
             return(time+":"+mint + " "+type +" "+day+"-"+month+"-"+year);
         },
          loadFriends: async ()=>{
-            let people_list = '';
-            db.collection("login").get()
-            .then((data)=>{
+            let loadLoggers = await db.collection("login").get()
+            .then(async (data)=>{
                 data.forEach(async(doc)=>{
                     if(doc.data().username!=username)
                     {
-                        let load = await storage.child(`profile-images/${doc.data().username}`).listAll()
+                        // console.log(doc.data().username)
+                        let loadImage = await storage.child(`profile-images/${doc.data().username}`).listAll()
                         .then(async(result)=>{
                              result.items.forEach(async(image)=>{
                                 image.getDownloadURL().then(async(url)=>{
-
-                                    db.collection('onlineUsers').get()
-                                    .then(async(querySnapshot)=>{
-                                        querySnapshot.forEach((Doc)=>{
-                                            if(doc.data().username == Doc.id)
-                                            {
-                                            if(Doc.data().online == true)
-                                            people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
-                                            <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
-                                            <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
-                                            <span name ='${doc.data().username}' class="onlineStatus" ><img stlye="margin-left:20px" src="../images/circle-16.png"></span>
-                                            </div></a> `;
-                                            else
-                                            people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
-                                            <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
-                                            <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
-                                            </div></a> `;
-
-                                            $('.friend-list').html(people_list);                
-                                            $('.friend-list').html(people_list);    
-                                            }
-                                        })
-                                    })
                                     
+                                    
+                                    chatBox.appendHTML(doc,url)
                             })   
                              
                         })
@@ -128,8 +107,44 @@ $(document).ready(function () {
                 chatBox.loadFriends();
             },1000)
         },
-        appendHTML: ()=>{
+        appendHTML: async (doc,url)=>{
+            let people_list = '';
+            let onlineUsers = await  db.collection('onlineUsers').get()
+            .then(async(querySnapshot)=>{
+                querySnapshot.forEach((Doc)=>{
 
+                    if(doc.data().username===Doc.id && chatBox.alreadyMarkedFriends.indexOf(doc.data().username)==-1)
+                    {
+
+                    chatBox.alreadyMarkedFriends.push(Doc.id) 
+                    if(Doc.data().online == true)
+                    people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
+                    <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
+                    <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
+                    <span name ='${doc.data().username}' class="onlineStatus" ><img stlye="margin-left:20px" src="../images/circle-16.png"></span>
+                    </div></a> `;
+                    else
+                    {
+                    people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
+                    <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
+                    <span  name ='${doc.data().username}'  class='friend-name ${doc.data().username}' id =${doc.data().username}'>${doc.data().name}</span>
+                    <span name ='${doc.data().username}' class="onlineStatus" style=""display: none ><img stlye="margin-left:20px" src="../images/circle-16.png"></span>
+                    </div></a> `;
+                    }
+                    $('.friend-list').append(people_list);                
+                    }
+
+                    if(doc.data().username===Doc.id && chatBox.alreadyMarkedFriends.indexOf(doc.data().username)!=-1)
+                    {
+                        if(Doc.data().online == true)
+                        $('a.'+doc.data().username).find($('.onlineStatus')).css("display","inline");
+
+                        if(Doc.data().online == false)
+                        $('a.'+doc.data().username).find($('.onlineStatus')).css("display","none");                        
+                    }
+
+                })
+            })
         },
         submit: ()=>
         {
@@ -220,6 +235,11 @@ $(document).ready(function () {
             if(Key.keyCode>=32 && Key.keyCode <=126 || Key.keyCode==13) 
             {
                 chatBox.makeStatusTrue();
+            }
+
+            if($('#comment').val()!=="" && Key.keyCode==13)
+            {
+                chatBox.submit();
             }
     });
     chatBox.hideBox();
