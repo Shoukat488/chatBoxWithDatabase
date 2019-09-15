@@ -64,21 +64,26 @@ $(document).ready(function () {
             let DateAndTime = new Date();
             let month = DateAndTime.getMonth();
             let day = DateAndTime.getDate();
-            let time = DateAndTime.getHours();
+            let hrs = DateAndTime.getHours();
             let year= DateAndTime.getFullYear();
             let type;
             if(time>12)
                 type  ="pm";
             else
                 type = "am"
-            if(time==0)
-                time = 12;
-            else if (time>12)
+            if(hrs==0)
+                hrs = 12;
+            else if (hrs>12)
+            hrs -= 12;
 
-            time -= 12;
             let  mint = DateAndTime.getMinutes();
 
-            return(time+":"+mint + " "+type +" "+day+"-"+month+"-"+year);
+            if((hrs<10 && hrs >=0 ) && (mint<10 && mint >=0))
+            return(`0${hrs}:0${mint} ${type} | ${day}-${month}-${year}`);
+            else if(hrs<10 && hrs >=0)
+            return(`0${hrs}:${mint} ${type} | ${day}-${month}-${year}`);            
+            else if(mint<10 && mint >=0)
+            return(`${hrs}:0${mint} ${type} | ${day}-${month}-${year}`);                        
         },
          loadFriends: async ()=>{
             let loadLoggers = await db.collection("login").get()
