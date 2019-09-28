@@ -31,7 +31,9 @@
                 }
                 else
                 {
-                    $('#message').css("display","block");
+                    setTimeout(function() {
+                        $('#message').css("display","block");
+                    },500)
                 }
         });
 
@@ -41,11 +43,10 @@
     function match(username,password)
     {
        
-
         return status === true;
     }
 
-    // $('#signup').click(()=>{
-    //     alert();
-    //     window.location.href = "./signup.html";
-    // })
+    $('#signup').click(()=>{
+      
+        window.location.href = "./signup.html";
+    })

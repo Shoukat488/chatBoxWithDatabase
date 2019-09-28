@@ -14,6 +14,7 @@ $(document).ready(()=>{
   var db = firebase.firestore();
   let imageFile;
   let username = '';
+
   setTimeout(()=>{
 
     inputFile.addEventListener('change',(event)=>{
@@ -22,6 +23,7 @@ $(document).ready(()=>{
       $('.custom-file-label').html(imageFile.name)
     })
   },3000)
+
   $('#signup').click(async()=>{
       username = ''
       let name = $('#fullname').val();
@@ -29,7 +31,12 @@ $(document).ready(()=>{
       let pass1 = $('#createPass').val();
       let pass2 = $('#confirmPass').val();
 
-      if(pass1 === pass2)
+      if(pass1 =="" || pass2 == "" || name == "" || email == "")
+      {
+        $('#message').html("Please fill the form");
+        $('#message').css("display","block");
+      }
+      else if(pass1 === pass2)
       {
         for(let i = 0 ; i < email.length ; i++)
             {
@@ -44,15 +51,7 @@ $(document).ready(()=>{
               username,
               password: pass1
             }
-          
-            // let result = await AlreadyRegister(obj);
-
-            // if(result==true)
-            // {
-            //   $('#message').html(`user already registered with ${email}`)
-            //   $('#message').css("display","block");            
-            // }
-            // else{
+  
 
               getKeys(obj);
 
@@ -60,8 +59,6 @@ $(document).ready(()=>{
                 addIntoLoginList(obj);
               },3000);
 
-
-            // }
 
     
       }
@@ -99,25 +96,25 @@ $(document).ready(()=>{
           setTimeout(()=>{
             addFriendsIntoList(keys,obj);
             console.log("H1")
-            },3000)
+            },500)
           setTimeout(()=>{
             addAtFriendsLiveChat(keys,obj)
             console.log("H1")
-            },3000)
+            },500)
           setTimeout(()=>{
             addFriendsIntoLiveChat(keys,obj);
             console.log("H1")
-            },3000)
+            },500)
           setTimeout(()=>{
             addIntoOnlineList(obj);
-          },3000)
+          },500)
           setTimeout(() => {
             uploadImage();
             console.log("H1")
-          }, 1000);
+          }, 500);
           setTimeout(() => {
           window.location.href = "login.html";            
-            }, 2000);
+            }, 18000);
         });
     
     }
@@ -127,8 +124,15 @@ $(document).ready(()=>{
       keys.forEach( (key)=>{
         
         db.collection('users').doc(key)
-              .collection(obj.username).add({});
+              .collection(obj.username).add({})
+              .then( (obj)=>{
+
+              })
         console.log("register")
+
+        setTimeout(() => {
+        console.log( `registering... ${key}`)
+        }, 1000);
 
       })
     }
@@ -138,8 +142,14 @@ $(document).ready(()=>{
       keys.forEach( (key)=>{
         
         db.collection('users').doc(obj.username)
-        .collection(key).add({});
+        .collection(key).add({})
+        .then( (obj)=>{
+
+        })
         console.log("add");
+        setTimeout(() => {
+          console.log( `adding friends into list ... ${key}`)
+          }, 1000);
 
       })
     }
@@ -159,8 +169,14 @@ $(document).ready(()=>{
     {
       keys.forEach( (key)=>{
         db.collection('liveChatt').doc(obj.username)
-            .collection(key).add({"username":key,"live":false,"online":false});
+            .collection(key).add({"username":key,"live":false,"online":false})
+            .then( (obj)=>{
+
+            })
       console.log("add");
+      setTimeout(() => {
+        console.log( `adding friends into live chat ... ${key}`)
+        }, 1000);
 
     })
 
@@ -183,13 +199,24 @@ $(document).ready(()=>{
         
          db.collection('liveChatt').doc(key)
               .collection(obj.username).add({"live":false})
+              .then( (obj)=>{
+
+              })
+              setTimeout(() => {
+                console.log( `adding into friends live chat list ... {key}`)
+                }, 1000);
+
         console.log("register at live chat")
 
       })
     }
     function addIntoOnlineList(obj)
     {
-      db.collection('onlineUsers').doc(obj.username).add({"online":false});
+      db.collection('onlineUsers').add({"username": `${obj.username}` , "online":true});
+
+      setTimeout(() => {
+        console.log( `adding into online list ... {key}`)
+        }, 1000);
     }
 })
 

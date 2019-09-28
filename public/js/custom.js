@@ -19,7 +19,7 @@ $(document).ready(function () {
 
     let username = localStorage.getItem('username');
     let name = localStorage.getItem('name');
-    let  friend_name = 'm_awatif';
+    let  friend_name = 'shoukatali488';
 
     var chatBox={
         alreadyMarkedFriends :[],
@@ -37,10 +37,16 @@ $(document).ready(function () {
             else
             string += `<div class=" chat friend"> <span class="name" >${doc.data().name}</span><br>`;
 
+
             string += `<span class="time ">${doc.data().time} </span>`;
             string += `<br><span class="comment">${doc.data().comment} </span></div>`;
+            
+            // unsortedData.push({ time:  doc.data().createdAt , htmlTag:  string}) ;
+
 
             });
+
+            // sortedData = chatBox.sortConversation(unsortedData); 
             $('#chatBox').html(string);
 
             });
@@ -52,14 +58,40 @@ $(document).ready(function () {
     
 
         },
+
+        sortConversation: function(unsortedData) {
+            // let tempData = [];
+            
+            // for( let i = 0 ; i < unsortedData.length ; i ++)
+            // {
+
+            //     for( let j = 1 ; j < unsortedData.length - 1 ; j ++)
+            //     {
+
+            //         let obj1 = unsortedData[i].createdAt;
+            //         let obj2 = unsortedData[j].createdAt;
+
+            //         if(obj1 > obj2)
+
+            //     }
+
+            // }
+        },
+
         postData: (dataForMe,dataForYou)=>
         {
             db.collection("users").doc(username)
-                .collection(friend_name).add(dataForMe);
-            
+                .collection(friend_name).add(dataForMe)
+                .then( () =>{
+                    console.log("2")
+                })
             db.collection("users").doc(friend_name)
-                .collection(username).add(dataForYou);
+                .collection(username).add(dataForYou)
+                .then( () =>{
+                    console.log("3")
+                })
         },
+
         getTime: ()=> {
             let DateAndTime = new Date();
             let month = DateAndTime.getMonth();
@@ -67,7 +99,7 @@ $(document).ready(function () {
             let hrs = DateAndTime.getHours();
             let year= DateAndTime.getFullYear();
             let type;
-            if(time>12)
+            if(hrs>12)
                 type  ="pm";
             else
                 type = "am"
@@ -83,7 +115,8 @@ $(document).ready(function () {
             else if(hrs<10 && hrs >=0)
             return(`0${hrs}:${mint} ${type} | ${day}-${month}-${year}`);            
             else if(mint<10 && mint >=0)
-            return(`${hrs}:0${mint} ${type} | ${day}-${month}-${year}`);                        
+            return(`${hrs}:0${mint} ${type} | ${day}-${month}-${year}`); 
+                                 
         },
          loadFriends: async ()=>{
             let loadLoggers = await db.collection("login").get()
@@ -96,8 +129,7 @@ $(document).ready(function () {
                         .then(async(result)=>{
                              result.items.forEach(async(image)=>{
                                 image.getDownloadURL().then(async(url)=>{
-                                    
-                                    
+                                     
                                     chatBox.appendHTML(doc,url)
                             })   
                              
@@ -112,16 +144,16 @@ $(document).ready(function () {
                 chatBox.loadFriends();
             },1000)
         },
-        appendHTML: async (doc,url)=>{
+        appendHTML: async (doc,url) =>{
             let people_list = '';
             let onlineUsers = await  db.collection('onlineUsers').get()
             .then(async(querySnapshot)=>{
                 querySnapshot.forEach((Doc)=>{
 
-                    if(doc.data().username===Doc.id && chatBox.alreadyMarkedFriends.indexOf(doc.data().username)==-1)
+                    if(doc.data().username === Doc.data().username && chatBox.alreadyMarkedFriends.indexOf(doc.data().username)==-1)
                     {
 
-                    chatBox.alreadyMarkedFriends.push(Doc.id) 
+                    chatBox.alreadyMarkedFriends.push(Doc.data().username) 
                     if(Doc.data().online == true)
                     people_list = `<a href='#' style="text-decoration:none" class ='${doc.data().username}' name='${doc.data().username}'  ><div name ='${doc.data().username}' class="available-friends friend-box ">
                     <span name ='${doc.data().username}' class="profile-photo "><img  name ='${doc.data().username}'  class='images' src="${url}"> </span>
@@ -139,7 +171,7 @@ $(document).ready(function () {
                     $('.friend-list').append(people_list);                
                     }
 
-                    if(doc.data().username===Doc.id && chatBox.alreadyMarkedFriends.indexOf(doc.data().username)!=-1)
+                    if(doc.data().username === Doc.data().username && chatBox.alreadyMarkedFriends.indexOf(doc.data().username)!=-1)
                     {
                         if(Doc.data().online == true)
                         $('a.'+doc.data().username).find($('.onlineStatus')).css("display","inline");
@@ -155,10 +187,10 @@ $(document).ready(function () {
         {
 
                 let comment = $('#comment').val();
-
                 let time = chatBox.getTime();
                 var dataForMe = { name: 'You' , time: time , comment: comment ,createdAt: firebase.firestore.FieldValue.serverTimestamp()};
                 var dataForYou = { name: name , time: time , comment: comment ,createdAt: firebase.firestore.FieldValue.serverTimestamp()};
+                console.log("1");
                 chatBox.postData(dataForMe,dataForYou);
                 $('#comment').val('');
         }
@@ -215,10 +247,28 @@ $(document).ready(function () {
                         },1000)
         },
         makeMeOnline:()=>{
-            db.collection('onlineUsers').doc(username).update({"online":true});
+            db.collection('onlineUsers').get()
+            .then( (querySnapshot)=>{
+                querySnapshot.forEach( (doc) =>{
+
+                    if( doc.data().username === username )
+                    {
+                        db.collection('onlineUsers').doc(doc.id).update({"online":true});
+                    }
+                })
+            })
         },
         makeMeOffline:()=>{
-            db.collection('onlineUsers').doc(username).update({"online":false});
+            db.collection('onlineUsers').get()
+            .then( (querySnapshot)=>{
+                querySnapshot.forEach( (doc) =>{
+
+                    if( doc.data().username === username )
+                    {
+                        db.collection('onlineUsers').doc(doc.id).update({"online":false});
+                    }
+                })
+            })
         },
         hideBox:()=>{
             $('.chat-container').css("display","none");            
@@ -247,13 +297,19 @@ $(document).ready(function () {
                 chatBox.submit();
             }
     });
+
+
     chatBox.hideBox();
     chatBox.makeMeOnline();
     chatBox.loadFriends();
     chatBox.loadMyData();
     chatBox.changeLiveStatus();
-    $('.chat-form').delegate('.send','click',()=>{
+
+
+    $('.chat-form').delegate('#send','click',()=>{
+       
         chatBox.submit();
+        alert()
         makeStatusFalse();
         console.log("sent");
     })
@@ -262,7 +318,7 @@ $(document).ready(function () {
     
     $('.friend-list').delegate('.available-friends','click',(event)=>
     {
-        chatBox.showBox();
+
         $('#comment').focus();
         friend_name = $(event.target).attr('name');
          let chat_name =  $('a.'+friend_name).find($('span.'+friend_name)).html();
@@ -270,6 +326,7 @@ $(document).ready(function () {
 
         $('.chat-photo').find($('img')).attr('src',imageURL);
         $('.chat-name').html(chat_name);
+        chatBox.showBox();
 
     })
     $('#signOut').click(()=>{
